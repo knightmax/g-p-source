@@ -94,8 +94,7 @@ pub fn is_pid_alive(pid: u32) -> bool {
             let handle = unsafe {
                 windows_sys::Win32::System::Threading::OpenProcess(
                     0x0001, // PROCESS_TERMINATE not needed, PROCESS_QUERY_LIMITED_INFORMATION
-                    0,
-                    pid,
+                    0, pid,
                 )
             };
             if handle.is_null() {
@@ -126,16 +125,15 @@ pub fn list_instances() -> Vec<InstanceInfo> {
 
     for entry in entries.flatten() {
         let path = entry.path();
-        if path.extension().is_some_and(|e| e == "json") {
-            if let Ok(contents) = fs::read_to_string(&path) {
-                if let Ok(info) = serde_json::from_str::<InstanceInfo>(&contents) {
-                    if is_pid_alive(info.pid) {
-                        instances.push(info);
-                    } else {
-                        // Stale instance — clean up
-                        let _ = fs::remove_file(&path);
-                    }
-                }
+        if path.extension().is_some_and(|e| e == "json")
+            && let Ok(contents) = fs::read_to_string(&path)
+            && let Ok(info) = serde_json::from_str::<InstanceInfo>(&contents)
+        {
+            if is_pid_alive(info.pid) {
+                instances.push(info);
+            } else {
+                // Stale instance — clean up
+                let _ = fs::remove_file(&path);
             }
         }
     }
@@ -160,13 +158,13 @@ pub fn kill_all_instances() -> usize {
     for entry in entries.flatten() {
         let path = entry.path();
         if path.extension().is_some_and(|e| e == "json") {
-            if let Ok(contents) = fs::read_to_string(&path) {
-                if let Ok(info) = serde_json::from_str::<InstanceInfo>(&contents) {
-                    if info.pid != std::process::id() && is_pid_alive(info.pid) {
-                        kill_pid(info.pid);
-                        killed += 1;
-                    }
-                }
+            if let Ok(contents) = fs::read_to_string(&path)
+                && let Ok(info) = serde_json::from_str::<InstanceInfo>(&contents)
+                && info.pid != std::process::id()
+                && is_pid_alive(info.pid)
+            {
+                kill_pid(info.pid);
+                killed += 1;
             }
             let _ = fs::remove_file(&path);
         }
@@ -178,7 +176,9 @@ pub fn kill_all_instances() -> usize {
 fn kill_pid(pid: u32) {
     #[cfg(unix)]
     {
-        unsafe { libc::kill(pid as i32, libc::SIGTERM); }
+        unsafe {
+            libc::kill(pid as i32, libc::SIGTERM);
+        }
     }
     #[cfg(windows)]
     {

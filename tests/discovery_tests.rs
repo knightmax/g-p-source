@@ -1,8 +1,8 @@
 #[cfg(test)]
 mod tests {
     use g_p_source::discovery::{
-        is_pid_alive, kill_all_instances, list_instances, read_instance, remove_instance,
-        write_instance, InstanceStatus,
+        InstanceStatus, is_pid_alive, kill_all_instances, list_instances, read_instance,
+        remove_instance, write_instance,
     };
     use std::path::Path;
     use tempfile::TempDir;
@@ -45,9 +45,8 @@ mod tests {
 
             let instances = list_instances();
             // Our instance should be in the list (PID is current process, so alive)
-            let found = instances
-                .iter()
-                .any(|i| i.workspace == workspace.to_string_lossy().to_string());
+            let ws = workspace.to_string_lossy();
+            let found = instances.iter().any(|i| i.workspace == *ws);
             assert!(found, "expected to find our instance in list_instances()");
 
             // Cleanup
@@ -87,9 +86,8 @@ mod tests {
 
             // list_instances should clean it up
             let instances = list_instances();
-            let found = instances
-                .iter()
-                .any(|i| i.workspace == workspace.to_string_lossy().to_string());
+            let ws = workspace.to_string_lossy();
+            let found = instances.iter().any(|i| i.workspace == *ws);
             assert!(!found, "stale instance should have been cleaned up");
 
             // The file should be gone

@@ -1,5 +1,5 @@
 use notify::{
-    event::ModifyKind, Config, Event, EventKind, RecommendedWatcher, RecursiveMode, Watcher,
+    Config, Event, EventKind, RecommendedWatcher, RecursiveMode, Watcher, event::ModifyKind,
 };
 use std::path::{Path, PathBuf};
 use std::time::Duration;
@@ -46,8 +46,7 @@ impl FsWatcher {
                     }
                 }
             },
-            Config::default()
-                .with_poll_interval(Duration::from_millis(debounce_ms)),
+            Config::default().with_poll_interval(Duration::from_millis(debounce_ms)),
         )?;
 
         watcher.watch(root, RecursiveMode::Recursive)?;

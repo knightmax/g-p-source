@@ -27,10 +27,7 @@ pub async fn crawl_workspace(
         }
 
         let path = entry.path();
-        let ext = path
-            .extension()
-            .and_then(|e| e.to_str())
-            .unwrap_or("");
+        let ext = path.extension().and_then(|e| e.to_str()).unwrap_or("");
 
         if registry.language_for_extension(ext).is_some() {
             tx.send(FsEvent {

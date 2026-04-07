@@ -4,7 +4,7 @@ use crate::parser::SourceParser;
 use crate::watcher::{FsEvent, FsEventKind};
 use std::collections::HashSet;
 use std::sync::Arc;
-use tokio::sync::{mpsc, Semaphore};
+use tokio::sync::{Semaphore, mpsc};
 
 /// Run the full indexing pipeline: dispatcher → parser pool → index writer.
 pub async fn run_pipeline(
@@ -71,11 +71,11 @@ pub async fn run_pipeline(
                 let store_check = store.clone();
                 if let Ok(content) = std::fs::read(&event.path) {
                     let new_hash = blake3::hash(&content);
-                    if let Ok(Some(meta)) = store_check.get_file_meta(&path_str) {
-                        if meta.hash == new_hash.as_bytes().to_vec() {
-                            tracing::debug!(file = %path_str, "content unchanged, skipping");
-                            continue;
-                        }
+                    if let Ok(Some(meta)) = store_check.get_file_meta(&path_str)
+                        && meta.hash == new_hash.as_bytes().to_vec()
+                    {
+                        tracing::debug!(file = %path_str, "content unchanged, skipping");
+                        continue;
                     }
                 }
 
@@ -131,10 +131,7 @@ pub async fn run_pipeline(
                         "parsed file"
                     );
 
-                    let _ = diff_tx.blocking_send(IndexUpdate::Upsert {
-                        file_path,
-                        symbols,
-                    });
+                    let _ = diff_tx.blocking_send(IndexUpdate::Upsert { file_path, symbols });
                 });
             }
         }

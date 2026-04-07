@@ -31,13 +31,14 @@ public class UserService {
         let tree = parser
             .parse(&content, SupportedLanguage::Java, None)
             .unwrap();
-        let symbols = parser.extract_symbols(&tree, &content, SupportedLanguage::Java, "src/service.java");
+        let symbols =
+            parser.extract_symbols(&tree, &content, SupportedLanguage::Java, "src/service.java");
         store
             .upsert_file_symbols("src/service.java", &symbols)
             .unwrap();
 
         let results = store.symbols_in_file("src/service.java").unwrap();
-        assert!(results.len() >= 1);
+        assert!(!results.is_empty());
 
         // 2. Modify the file
         fs::write(
@@ -55,7 +56,12 @@ public class UserService {
         let tree2 = parser
             .parse(&content2, SupportedLanguage::Java, None)
             .unwrap();
-        let symbols2 = parser.extract_symbols(&tree2, &content2, SupportedLanguage::Java, "src/service.java");
+        let symbols2 = parser.extract_symbols(
+            &tree2,
+            &content2,
+            SupportedLanguage::Java,
+            "src/service.java",
+        );
         store
             .upsert_file_symbols("src/service.java", &symbols2)
             .unwrap();

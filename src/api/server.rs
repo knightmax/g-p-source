@@ -5,8 +5,8 @@ use crate::index::SledStore;
 use jsonrpsee::server::Server;
 use std::net::SocketAddr;
 use std::path::Path;
-use std::sync::atomic::AtomicBool;
 use std::sync::Arc;
+use std::sync::atomic::AtomicBool;
 
 pub async fn start_rpc_server(
     store: Arc<SledStore>,

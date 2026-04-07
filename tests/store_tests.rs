@@ -31,7 +31,9 @@ mod tests {
     fn upsert_and_locate() {
         let (store, _dir) = make_store();
         let sym = make_symbol("UserService", SymbolKind::Class, "src/service.java");
-        store.upsert_file_symbols("src/service.java", &[sym]).unwrap();
+        store
+            .upsert_file_symbols("src/service.java", &[sym])
+            .unwrap();
 
         let results = store.locate("src/service.java.UserService").unwrap();
         assert_eq!(results.len(), 1);
@@ -66,14 +68,20 @@ mod tests {
     #[test]
     fn symbols_by_kind() {
         let (store, _dir) = make_store();
-        let symbols = vec![
+        let symbols = [
             make_symbol("A", SymbolKind::Class, "a.java"),
             make_symbol("B", SymbolKind::Class, "b.java"),
             make_symbol("f", SymbolKind::Function, "c.rs"),
         ];
-        store.upsert_file_symbols("a.java", &[symbols[0].clone()]).unwrap();
-        store.upsert_file_symbols("b.java", &[symbols[1].clone()]).unwrap();
-        store.upsert_file_symbols("c.rs", &[symbols[2].clone()]).unwrap();
+        store
+            .upsert_file_symbols("a.java", &[symbols[0].clone()])
+            .unwrap();
+        store
+            .upsert_file_symbols("b.java", &[symbols[1].clone()])
+            .unwrap();
+        store
+            .upsert_file_symbols("c.rs", &[symbols[2].clone()])
+            .unwrap();
 
         let classes = store.symbols_by_kind("class").unwrap();
         assert_eq!(classes.len(), 2);

@@ -15,6 +15,12 @@ pub struct LanguageRegistry {
     languages: HashMap<SupportedLanguage, tree_sitter::Language>,
 }
 
+impl Default for LanguageRegistry {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl LanguageRegistry {
     pub fn new() -> Self {
         let mut ext_map = HashMap::new();

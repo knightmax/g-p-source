@@ -1,7 +1,7 @@
 #[cfg(test)]
 mod tests {
-    use g_p_source::parser::source_parser::SourceParser;
     use g_p_source::parser::language_registry::SupportedLanguage;
+    use g_p_source::parser::source_parser::SourceParser;
     use g_p_source::parser::symbol::SymbolKind;
 
     fn extract(source: &str, lang: SupportedLanguage) -> Vec<(String, SymbolKind)> {
@@ -20,8 +20,16 @@ public class UserService {
 }
 "#;
         let symbols = extract(source, SupportedLanguage::Java);
-        assert!(symbols.iter().any(|(n, k)| n == "UserService" && *k == SymbolKind::Class));
-        assert!(symbols.iter().any(|(n, k)| n == "findById" && *k == SymbolKind::Method));
+        assert!(
+            symbols
+                .iter()
+                .any(|(n, k)| n == "UserService" && *k == SymbolKind::Class)
+        );
+        assert!(
+            symbols
+                .iter()
+                .any(|(n, k)| n == "findById" && *k == SymbolKind::Method)
+        );
     }
 
     #[test]
@@ -33,8 +41,16 @@ public interface Serializable {
 public enum Color { RED, GREEN, BLUE }
 "#;
         let symbols = extract(source, SupportedLanguage::Java);
-        assert!(symbols.iter().any(|(n, k)| n == "Serializable" && *k == SymbolKind::Interface));
-        assert!(symbols.iter().any(|(n, k)| n == "Color" && *k == SymbolKind::Enum));
+        assert!(
+            symbols
+                .iter()
+                .any(|(n, k)| n == "Serializable" && *k == SymbolKind::Interface)
+        );
+        assert!(
+            symbols
+                .iter()
+                .any(|(n, k)| n == "Color" && *k == SymbolKind::Enum)
+        );
     }
 
     #[test]
@@ -51,9 +67,21 @@ export interface Config {
 }
 "#;
         let symbols = extract(source, SupportedLanguage::TypeScript);
-        assert!(symbols.iter().any(|(n, k)| n == "UserDTO" && *k == SymbolKind::Class));
-        assert!(symbols.iter().any(|(n, k)| n == "createUser" && *k == SymbolKind::Function));
-        assert!(symbols.iter().any(|(n, k)| n == "Config" && *k == SymbolKind::Interface));
+        assert!(
+            symbols
+                .iter()
+                .any(|(n, k)| n == "UserDTO" && *k == SymbolKind::Class)
+        );
+        assert!(
+            symbols
+                .iter()
+                .any(|(n, k)| n == "createUser" && *k == SymbolKind::Function)
+        );
+        assert!(
+            symbols
+                .iter()
+                .any(|(n, k)| n == "Config" && *k == SymbolKind::Interface)
+        );
     }
 
     #[test]
@@ -67,8 +95,16 @@ def main():
     pass
 "#;
         let symbols = extract(source, SupportedLanguage::Python);
-        assert!(symbols.iter().any(|(n, k)| n == "UserService" && *k == SymbolKind::Class));
-        assert!(symbols.iter().any(|(n, k)| n == "main" && *k == SymbolKind::Function));
+        assert!(
+            symbols
+                .iter()
+                .any(|(n, k)| n == "UserService" && *k == SymbolKind::Class)
+        );
+        assert!(
+            symbols
+                .iter()
+                .any(|(n, k)| n == "main" && *k == SymbolKind::Function)
+        );
     }
 
     #[test]
@@ -85,11 +121,31 @@ pub fn main() {}
 mod utils {}
 "#;
         let symbols = extract(source, SupportedLanguage::Rust);
-        assert!(symbols.iter().any(|(n, k)| n == "Config" && *k == SymbolKind::Struct));
-        assert!(symbols.iter().any(|(n, k)| n == "Status" && *k == SymbolKind::Enum));
-        assert!(symbols.iter().any(|(n, k)| n == "Serializable" && *k == SymbolKind::Trait));
-        assert!(symbols.iter().any(|(n, k)| n == "main" && *k == SymbolKind::Function));
-        assert!(symbols.iter().any(|(n, k)| n == "utils" && *k == SymbolKind::Module));
+        assert!(
+            symbols
+                .iter()
+                .any(|(n, k)| n == "Config" && *k == SymbolKind::Struct)
+        );
+        assert!(
+            symbols
+                .iter()
+                .any(|(n, k)| n == "Status" && *k == SymbolKind::Enum)
+        );
+        assert!(
+            symbols
+                .iter()
+                .any(|(n, k)| n == "Serializable" && *k == SymbolKind::Trait)
+        );
+        assert!(
+            symbols
+                .iter()
+                .any(|(n, k)| n == "main" && *k == SymbolKind::Function)
+        );
+        assert!(
+            symbols
+                .iter()
+                .any(|(n, k)| n == "utils" && *k == SymbolKind::Module)
+        );
     }
 
     #[test]
@@ -105,7 +161,15 @@ namespace MyApp {
 }
 "#;
         let symbols = extract(source, SupportedLanguage::CSharp);
-        assert!(symbols.iter().any(|(n, k)| n == "UserService" && *k == SymbolKind::Class));
-        assert!(symbols.iter().any(|(n, k)| n == "IRepository" && *k == SymbolKind::Interface));
+        assert!(
+            symbols
+                .iter()
+                .any(|(n, k)| n == "UserService" && *k == SymbolKind::Class)
+        );
+        assert!(
+            symbols
+                .iter()
+                .any(|(n, k)| n == "IRepository" && *k == SymbolKind::Interface)
+        );
     }
 }

@@ -9,8 +9,8 @@ mod watcher;
 
 use config::Config;
 use index::SledStore;
-use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
+use std::sync::atomic::{AtomicBool, Ordering};
 use tracing_subscriber::EnvFilter;
 
 #[tokio::main]
@@ -84,12 +84,8 @@ async fn main() -> anyhow::Result<()> {
         });
 
         // Run MCP server on stdio (blocks until stdin closes)
-        mcp::stdio_server::run_mcp_server(
-            store,
-            indexed,
-            workspace.to_string_lossy().to_string(),
-        )
-        .await?;
+        mcp::stdio_server::run_mcp_server(store, indexed, workspace.to_string_lossy().to_string())
+            .await?;
 
         return Ok(());
     }
@@ -109,7 +105,8 @@ async fn main() -> anyhow::Result<()> {
     let indexed = Arc::new(AtomicBool::new(false));
 
     // Start JSON-RPC server (port 0 = OS picks a free port)
-    let addr = api::start_rpc_server(store.clone(), config.port, &workspace, indexed.clone()).await?;
+    let addr =
+        api::start_rpc_server(store.clone(), config.port, &workspace, indexed.clone()).await?;
     tracing::info!(%addr, "GPS API ready");
 
     // Update discovery to indexing status

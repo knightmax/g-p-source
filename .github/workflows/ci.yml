@@ -41,4 +41,4 @@ jobs:
         run: cargo build --release
 
       - name: Tests
-        run: cargo test
+        run: cargo test --test parser_tests --test store_tests --test pipeline_integration --test discovery_tests

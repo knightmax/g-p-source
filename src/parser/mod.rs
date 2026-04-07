@@ -6,8 +6,8 @@ pub mod symbol_diff;
 
 pub use language_registry::LanguageRegistry;
 pub use source_parser::SourceParser;
-pub use symbol::{Symbol, SymbolKind};
 #[allow(unused_imports)]
 pub use symbol::Visibility;
+pub use symbol::{Symbol, SymbolKind};
 #[allow(unused_imports)]
 pub use symbol_diff::SymbolDiff;

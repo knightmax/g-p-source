@@ -1,10 +1,10 @@
 use crate::index::SymbolStore;
-use jsonrpsee::core::async_trait;
 use jsonrpsee::core::RpcResult;
+use jsonrpsee::core::async_trait;
 use jsonrpsee::proc_macros::rpc;
 use serde::{Deserialize, Serialize};
-use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
+use std::sync::atomic::{AtomicBool, Ordering};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SymbolLocation {
@@ -69,10 +69,9 @@ pub struct GpsApiImpl<S: SymbolStore> {
 #[async_trait]
 impl<S: SymbolStore + 'static> GpsApiServer for GpsApiImpl<S> {
     async fn locate(&self, symbol_name: String) -> RpcResult<Vec<SymbolLocation>> {
-        let records = self
-            .store
-            .locate(&symbol_name)
-            .map_err(|e| jsonrpsee::types::ErrorObjectOwned::owned(-32603, e.to_string(), None::<()>))?;
+        let records = self.store.locate(&symbol_name).map_err(|e| {
+            jsonrpsee::types::ErrorObjectOwned::owned(-32603, e.to_string(), None::<()>)
+        })?;
 
         Ok(records
             .into_iter()
@@ -91,21 +90,18 @@ impl<S: SymbolStore + 'static> GpsApiServer for GpsApiImpl<S> {
         file_path: String,
         _depth: Option<u32>,
     ) -> RpcResult<Neighborhood> {
-        let imports = self
-            .store
-            .get_imports(&file_path)
-            .map_err(|e| jsonrpsee::types::ErrorObjectOwned::owned(-32603, e.to_string(), None::<()>))?;
-        let imported_by = self
-            .store
-            .get_importers(&file_path)
-            .map_err(|e| jsonrpsee::types::ErrorObjectOwned::owned(-32603, e.to_string(), None::<()>))?;
+        let imports = self.store.get_imports(&file_path).map_err(|e| {
+            jsonrpsee::types::ErrorObjectOwned::owned(-32603, e.to_string(), None::<()>)
+        })?;
+        let imported_by = self.store.get_importers(&file_path).map_err(|e| {
+            jsonrpsee::types::ErrorObjectOwned::owned(-32603, e.to_string(), None::<()>)
+        })?;
 
         let mut symbols = std::collections::HashMap::new();
         for related in imports.iter().chain(imported_by.iter()) {
-            let file_symbols = self
-                .store
-                .symbols_in_file(related)
-                .map_err(|e| jsonrpsee::types::ErrorObjectOwned::owned(-32603, e.to_string(), None::<()>))?;
+            let file_symbols = self.store.symbols_in_file(related).map_err(|e| {
+                jsonrpsee::types::ErrorObjectOwned::owned(-32603, e.to_string(), None::<()>)
+            })?;
             symbols.insert(
                 related.clone(),
                 file_symbols

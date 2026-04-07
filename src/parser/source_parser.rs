@@ -91,12 +91,11 @@ impl SourceParser {
             let mut def_kind_str = "";
 
             for cap in m.captures {
-                let cap_name: &str = &capture_names[cap.index as usize];
+                let cap_name = capture_names[cap.index as usize];
                 if cap_name == "name" {
-                    name_text =
-                        cap.node.utf8_text(source).unwrap_or_default().to_string();
-                } else if cap_name.starts_with("definition.") {
-                    def_kind_str = &cap_name["definition.".len()..];
+                    name_text = cap.node.utf8_text(source).unwrap_or_default().to_string();
+                } else if let Some(suffix) = cap_name.strip_prefix("definition.") {
+                    def_kind_str = suffix;
                     def_node = Some(cap.node);
                 }
             }

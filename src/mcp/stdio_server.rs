@@ -1,7 +1,7 @@
 use crate::index::SymbolStore;
-use serde_json::{json, Value};
-use std::sync::atomic::{AtomicBool, Ordering};
+use serde_json::{Value, json};
 use std::sync::Arc;
+use std::sync::atomic::{AtomicBool, Ordering};
 use tokio::io::{AsyncBufReadExt, AsyncWriteExt, BufReader};
 
 /// Minimal MCP (Model Context Protocol) server over stdio.
@@ -42,10 +42,7 @@ pub async fn run_mcp_server<S: SymbolStore + 'static>(
         };
 
         let id = request.get("id").cloned().unwrap_or(Value::Null);
-        let method = request
-            .get("method")
-            .and_then(|m| m.as_str())
-            .unwrap_or("");
+        let method = request.get("method").and_then(|m| m.as_str()).unwrap_or("");
         let params = request.get("params").cloned().unwrap_or(json!({}));
 
         let response = match method {
@@ -149,10 +146,7 @@ async fn handle_tools_call<S: SymbolStore>(
     indexed: &Arc<AtomicBool>,
     workspace: &str,
 ) -> Value {
-    let tool_name = params
-        .get("name")
-        .and_then(|n| n.as_str())
-        .unwrap_or("");
+    let tool_name = params.get("name").and_then(|n| n.as_str()).unwrap_or("");
     let arguments = params.get("arguments").cloned().unwrap_or(json!({}));
 
     let result = match tool_name {
@@ -254,10 +248,7 @@ fn tool_summary() -> Result<String, String> {
     .unwrap())
 }
 
-async fn write_response(
-    stdout: &mut tokio::io::Stdout,
-    response: &Value,
-) -> anyhow::Result<()> {
+async fn write_response(stdout: &mut tokio::io::Stdout, response: &Value) -> anyhow::Result<()> {
     let mut output = serde_json::to_string(response)?;
     output.push('\n');
     stdout.write_all(output.as_bytes()).await?;
