@@ -80,7 +80,6 @@ pub fn remove_instance(workspace: &Path) {
 }
 
 /// Check if a PID is still alive
-#[allow(dead_code)]
 pub fn is_pid_alive(pid: u32) -> bool {
     #[cfg(unix)]
     {
@@ -88,8 +87,105 @@ pub fn is_pid_alive(pid: u32) -> bool {
     }
     #[cfg(not(unix))]
     {
-        // On non-unix, assume alive
-        true
+        // On Windows, check via the Windows API
+        #[cfg(windows)]
+        {
+            use std::ptr;
+            let handle = unsafe {
+                windows_sys::Win32::System::Threading::OpenProcess(
+                    0x0001, // PROCESS_TERMINATE not needed, PROCESS_QUERY_LIMITED_INFORMATION
+                    0,
+                    pid,
+                )
+            };
+            if handle.is_null() {
+                return false;
+            }
+            unsafe { windows_sys::Win32::Foundation::CloseHandle(handle) };
+            true
+        }
+        #[cfg(not(windows))]
+        {
+            true
+        }
+    }
+}
+
+/// List all running instances, cleaning up stale ones along the way.
+pub fn list_instances() -> Vec<InstanceInfo> {
+    let dir = instances_dir();
+    if !dir.exists() {
+        return Vec::new();
+    }
+
+    let mut instances = Vec::new();
+    let entries = match fs::read_dir(&dir) {
+        Ok(e) => e,
+        Err(_) => return Vec::new(),
+    };
+
+    for entry in entries.flatten() {
+        let path = entry.path();
+        if path.extension().is_some_and(|e| e == "json") {
+            if let Ok(contents) = fs::read_to_string(&path) {
+                if let Ok(info) = serde_json::from_str::<InstanceInfo>(&contents) {
+                    if is_pid_alive(info.pid) {
+                        instances.push(info);
+                    } else {
+                        // Stale instance — clean up
+                        let _ = fs::remove_file(&path);
+                    }
+                }
+            }
+        }
+    }
+
+    instances
+}
+
+/// Kill all running instances and remove their discovery files.
+/// Returns the number of instances killed.
+pub fn kill_all_instances() -> usize {
+    let dir = instances_dir();
+    if !dir.exists() {
+        return 0;
+    }
+
+    let entries = match fs::read_dir(&dir) {
+        Ok(e) => e,
+        Err(_) => return 0,
+    };
+
+    let mut killed = 0;
+    for entry in entries.flatten() {
+        let path = entry.path();
+        if path.extension().is_some_and(|e| e == "json") {
+            if let Ok(contents) = fs::read_to_string(&path) {
+                if let Ok(info) = serde_json::from_str::<InstanceInfo>(&contents) {
+                    if info.pid != std::process::id() && is_pid_alive(info.pid) {
+                        kill_pid(info.pid);
+                        killed += 1;
+                    }
+                }
+            }
+            let _ = fs::remove_file(&path);
+        }
+    }
+
+    killed
+}
+
+fn kill_pid(pid: u32) {
+    #[cfg(unix)]
+    {
+        unsafe { libc::kill(pid as i32, libc::SIGTERM); }
+    }
+    #[cfg(windows)]
+    {
+        // On Windows, use taskkill
+        let _ = std::process::Command::new("taskkill")
+            .args([&"/PID", &pid.to_string(), "/F"])
+            .output();
     }
 }
 

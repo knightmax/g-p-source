@@ -62,6 +62,12 @@ gpsource --workspace-root /path/to/project --port 8080
 
 # Run as MCP server over stdio
 gpsource --mcp --workspace-root /path/to/project
+
+# List all running instances
+gpsource --discovery
+
+# Kill all running instances
+gpsource --kill
 ```
 
 ### CLI Options
@@ -71,6 +77,8 @@ gpsource --mcp --workspace-root /path/to/project
 | `-w, --workspace-root` | `.` | Root directory to index |
 | `-p, --port` | `0` (dynamic) | JSON-RPC server port (0 = OS picks a free port) |
 | `--mcp` | `false` | Run as MCP server over stdio instead of HTTP |
+| `--discovery` | `false` | List all running gpsource instances (JSON) and exit |
+| `--kill` | `false` | Kill all running gpsource instances and exit |
 | `--cache-capacity` | `41943040` (40 MB) | sled cache size in bytes |
 | `--exclude` | `.git,node_modules,target,bin,obj,build,dist,__pycache__` | Comma-separated exclusion patterns |
 | `--debounce-ms` | `100` | FS event debounce window in milliseconds |
@@ -99,6 +107,16 @@ Where `<hash>` is the first 16 characters of the BLAKE3 hash of the canonical wo
   "status": "ready",
   "started_at": "1712505600"
 }
+```
+
+Or use the built-in CLI commands:
+
+```bash
+# List all running instances as JSON (cleans up stale PIDs automatically)
+gpsource --discovery
+
+# Kill all running instances
+gpsource --kill
 ```
 
 **Status lifecycle:** `starting` → `indexing` → `ready`

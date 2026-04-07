@@ -16,6 +16,14 @@ pub struct Config {
     #[arg(long)]
     pub mcp: bool,
 
+    /// List all running gpsource instances and exit
+    #[arg(long)]
+    pub discovery: bool,
+
+    /// Kill all running gpsource instances and exit
+    #[arg(long)]
+    pub kill: bool,
+
     /// sled cache capacity in bytes (default: 40 MB)
     #[arg(long, default_value_t = 40 * 1024 * 1024)]
     pub cache_capacity: u64,

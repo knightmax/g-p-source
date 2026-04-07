@@ -16,6 +16,29 @@ use tracing_subscriber::EnvFilter;
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
     let config = Config::parse_args();
+
+    // Discovery mode: list running instances and exit
+    if config.discovery {
+        let instances = discovery::list_instances();
+        if instances.is_empty() {
+            println!("No running gpsource instances found.");
+        } else {
+            println!("{}", serde_json::to_string_pretty(&instances)?);
+        }
+        return Ok(());
+    }
+
+    // Kill mode: terminate all running instances and exit
+    if config.kill {
+        let killed = discovery::kill_all_instances();
+        match killed {
+            0 => println!("No running gpsource instances found."),
+            1 => println!("Killed 1 instance."),
+            n => println!("Killed {n} instances."),
+        }
+        return Ok(());
+    }
+
     let workspace = std::fs::canonicalize(&config.workspace_root)?;
 
     // MCP mode: run as stdio MCP server (no HTTP, no tracing to stdout)
