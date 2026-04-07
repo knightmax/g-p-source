@@ -18,10 +18,12 @@ sed -i '' "s/^version = \"${current}\"/version = \"${new_version}\"/" Cargo.toml
 # Update Cargo.lock
 cargo check --quiet 2>/dev/null
 
-# Commit, tag, push
+# Tag first (on current commit, before bump commit)
+git tag "${tag}"
+
+# Commit and push
 git add Cargo.toml Cargo.lock
 git commit -m "chore: bump version to ${new_version}"
-git tag "${tag}"
 git push origin main --tags
 
 echo "Done — pushed ${tag}"
