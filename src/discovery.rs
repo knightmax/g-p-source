@@ -85,28 +85,17 @@ pub fn is_pid_alive(pid: u32) -> bool {
     {
         unsafe { libc::kill(pid as i32, 0) == 0 }
     }
-    #[cfg(not(unix))]
+    #[cfg(windows)]
     {
-        // On Windows, check via the Windows API
-        #[cfg(windows)]
-        {
-            use std::ptr;
-            let handle = unsafe {
-                windows_sys::Win32::System::Threading::OpenProcess(
-                    0x0001, // PROCESS_TERMINATE not needed, PROCESS_QUERY_LIMITED_INFORMATION
-                    0, pid,
-                )
-            };
-            if handle.is_null() {
-                return false;
-            }
-            unsafe { windows_sys::Win32::Foundation::CloseHandle(handle) };
-            true
-        }
-        #[cfg(not(windows))]
-        {
-            true
-        }
+        std::process::Command::new("tasklist")
+            .args(["/FI", &format!("PID eq {pid}"), "/NH"])
+            .output()
+            .map(|o| String::from_utf8_lossy(&o.stdout).contains(&pid.to_string()))
+            .unwrap_or(false)
+    }
+    #[cfg(not(any(unix, windows)))]
+    {
+        true
     }
 }
 
