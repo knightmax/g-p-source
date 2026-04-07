@@ -1,6 +1,6 @@
 [package]
 name = "g-p-source"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2024"
 description = "Incremental code indexing engine with structural parsing and JSON-RPC API"
 
