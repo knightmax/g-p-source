@@ -1,0 +1,8 @@
+pub mod api;
+pub mod config;
+pub mod discovery;
+pub mod index;
+pub mod mcp;
+pub mod parser;
+pub mod pipeline;
+pub mod watcher;

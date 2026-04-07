@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "gpsource": {
+      "command": "gpsource",
+      "args": ["--mcp"],
+      "env": {
+        "RUST_LOG": "info"
+      }
+    }
+  }
+}

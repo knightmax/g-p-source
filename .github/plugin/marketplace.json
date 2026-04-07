@@ -1,0 +1,13 @@
+{
+  "name": "gps-copilot-plugin",
+  "owner": {
+    "name": "Maximilien CHEVALIER"
+  },
+  "plugins": [
+    {
+      "name": "gps-copilot-plugin",
+      "source": "./copilot-plugin/",
+      "description": "Structural codebase awareness for LLM coding assistants — powered by the gpsource incremental indexing engine. Provides symbol location, dependency graphs, and workspace summaries instead of naive code traversal."
+    }
+  ]
+}

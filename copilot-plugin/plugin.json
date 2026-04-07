@@ -1,0 +1,6 @@
+{
+  "name": "gps-copilot-plugin",
+  "description": "Structural codebase awareness for LLM coding assistants — powered by the gpsource incremental indexing engine. Provides symbol location, dependency graphs, and workspace summaries instead of naive code traversal.",
+  "version": "0.1.0",
+  "author": "knightmax"
+}
