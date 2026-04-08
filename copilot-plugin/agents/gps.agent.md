@@ -4,7 +4,8 @@ description: >
   Structural codebase navigator powered by gpsource. Uses a pre-built symbol index
   for sub-10ms lookups instead of naive file traversal. Knows about definitions,
   imports, dependency graphs, and workspace structure across Java, TypeScript, Python,
-  Rust, and C#/.NET codebases.
+  Rust, and C#/.NET codebases. Also provides full-text search, file reading,
+  hot files tracking, word index, and change tracking.
 tools: [execute/runInTerminal, read/readFile, search/codebase]
 ---
 
@@ -37,41 +38,48 @@ At the beginning of every session, **before doing any code navigation or editing
 
 4. Store the port and token for the session and confirm: "GPS engine active — using structural index."
 
-## Available API Methods
+## Available Tools (MCP / JSON-RPC)
 
-All calls go to `http://127.0.0.1:<port>` with `Authorization: Bearer <token>` and `Content-Type: application/json`.
+### Navigation & Structure
+| Tool | JSON-RPC Method | Description |
+|------|----------------|-------------|
+| `gps_status` | `status` | Health check + current sequence number |
+| `gps_locate` | `locate` | Find symbol definitions by name (prefix match) |
+| `gps_neighborhood` | `get_neighborhood` | Import/importer graph for a file |
+| `gps_summary` | `workspace_summary` | File count, languages, modules |
+| `gps_tree` | `file_tree` | Full file tree with language, lines, symbols |
 
-### `status` — Health Check
-```json
-{"jsonrpc":"2.0","method":"status","params":{},"id":1}
-```
-Returns: `{"status": "ready"|"indexing", "indexed": true|false, "workspace": "...", "port": N}`
+### Content & Search
+| Tool | JSON-RPC Method | Description |
+|------|----------------|-------------|
+| `gps_read` | `read_file` | Read file content with optional line range |
+| `gps_search` | `search` | Trigram-accelerated full-text search |
+| `gps_word` | `word_lookup` | O(1) exact identifier lookup |
 
-### `locate` — Find Symbol Definitions
-```json
-{"jsonrpc":"2.0","method":"locate","params":{"symbol_name":"UserService"},"id":1}
-```
-Returns: array of `{file, line, col, kind, qualified_name}`
-
-### `get_neighborhood` — Dependency Graph
-```json
-{"jsonrpc":"2.0","method":"get_neighborhood","params":{"file_path":"src/service.java","depth":1},"id":1}
-```
-Returns: `{file, imports[], imported_by[], symbols{}}`
-
-### `workspace_summary` — Workspace Overview
-```json
-{"jsonrpc":"2.0","method":"workspace_summary","params":{},"id":1}
-```
-Returns: `{total_files, files_by_language{}, modules[], public_symbols[]}`
+### Tracking & Batching
+| Tool | JSON-RPC Method | Description |
+|------|----------------|-------------|
+| `gps_hot` | `hot_files` | Recently modified files |
+| `gps_changes` | `changes_since` | Files changed since a sequence number |
+| `gps_bundle` | — | Batch up to 20 read-only queries in one call |
 
 ## Decision Tree
 
-- **"Where is X defined?"** → Use `locate`
-- **"What does this file depend on?"** → Use `get_neighborhood`  
-- **"What's in this codebase?"** → Use `workspace_summary`
-- **"Search inside function bodies"** → Fall back to grep/rg (GPS indexes definitions, not body content)
-- **"Find all usages of X"** → Use `locate` for the definition, then `get_neighborhood` on the file to find importers
+- **"Where is X defined?"** → Use `gps_locate`
+- **"What does this file depend on?"** → Use `gps_neighborhood`
+- **"What's in this codebase?"** → Use `gps_summary` or `gps_tree`
+- **"Read this file/function"** → Use `gps_read` with line range
+- **"Search for a pattern"** → Use `gps_search` (text), `gps_word` (exact identifier), or `gps_locate` (definitions)
+- **"What changed recently?"** → Use `gps_hot` or `gps_changes`
+- **"I need multiple pieces of info"** → Use `gps_bundle`
+- **"Find all usages of X"** → Use `gps_locate` + `gps_neighborhood` on the file
+
+## Security
+
+Sensitive files are automatically blocked from reading and indexing:
+- `.env*`, `credentials.json`, `secrets.*`
+- `.pem`, `.key`, `.p12` files
+- SSH keys (`id_rsa`, `id_ed25519`)
 
 ## Error Handling
 

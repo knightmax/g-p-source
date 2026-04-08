@@ -6,4 +6,4 @@ pub use sled_store::SledStore;
 pub use store::SymbolStore;
 pub use types::FileMetadata;
 #[allow(unused_imports)]
-pub use types::{SymbolRecord, SymbolRef};
+pub use types::{ChangeEntry, ChangeOp, SymbolRecord, SymbolRef, WordLocation};

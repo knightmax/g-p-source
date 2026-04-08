@@ -5,4 +5,5 @@ pub mod index;
 pub mod mcp;
 pub mod parser;
 pub mod pipeline;
+pub mod sensitive;
 pub mod watcher;

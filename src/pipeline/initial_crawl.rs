@@ -1,4 +1,5 @@
 use crate::parser::LanguageRegistry;
+use crate::sensitive;
 use crate::watcher::FsEvent;
 use tokio::sync::mpsc;
 use walkdir::WalkDir;
@@ -27,6 +28,13 @@ pub async fn crawl_workspace(
         }
 
         let path = entry.path();
+
+        // Skip sensitive files
+        if sensitive::is_sensitive_file(path) {
+            tracing::debug!(file = %path.display(), "skipping sensitive file during crawl");
+            continue;
+        }
+
         let ext = path.extension().and_then(|e| e.to_str()).unwrap_or("");
 
         if registry.language_for_extension(ext).is_some() {

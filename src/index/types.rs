@@ -25,4 +25,33 @@ pub struct FileMetadata {
     pub mtime: u64,
     pub hash: Vec<u8>,
     pub symbol_count: u32,
+    /// Language identifier (e.g. "java", "typescript", "python", "rust", "csharp")
+    #[serde(default)]
+    pub language: String,
+    /// Total number of lines in the file
+    #[serde(default)]
+    pub line_count: u32,
+}
+
+/// A tracked change entry for the changes log.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ChangeEntry {
+    pub seq: u64,
+    pub file_path: String,
+    pub operation: ChangeOp,
+    pub timestamp: u64,
+}
+
+/// The type of change operation.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub enum ChangeOp {
+    Upsert,
+    Remove,
+}
+
+/// A word index entry: file path + line number.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct WordLocation {
+    pub file: String,
+    pub line: u32,
 }

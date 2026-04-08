@@ -94,6 +94,8 @@ mod tests {
             mtime: 1234567890,
             hash: vec![1, 2, 3, 4],
             symbol_count: 42,
+            language: "rust".to_string(),
+            line_count: 100,
         };
         store.set_file_meta("src/main.rs", &meta).unwrap();
 
@@ -101,6 +103,8 @@ mod tests {
         assert_eq!(loaded.mtime, 1234567890);
         assert_eq!(loaded.hash, vec![1, 2, 3, 4]);
         assert_eq!(loaded.symbol_count, 42);
+        assert_eq!(loaded.language, "rust");
+        assert_eq!(loaded.line_count, 100);
     }
 
     #[test]

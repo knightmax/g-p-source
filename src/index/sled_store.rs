@@ -1,6 +1,7 @@
 use super::store::SymbolStore;
-use super::types::{FileMetadata, SymbolRecord, SymbolRef};
+use super::types::{ChangeEntry, ChangeOp, FileMetadata, SymbolRecord, SymbolRef, WordLocation};
 use crate::parser::Symbol;
+use std::sync::atomic::{AtomicU64, Ordering};
 
 pub struct SledStore {
     _db: sled::Db,
@@ -10,6 +11,10 @@ pub struct SledStore {
     dep_import: sled::Tree,
     dep_reverse: sled::Tree,
     meta_file: sled::Tree,
+    word_index: sled::Tree,
+    trigram_index: sled::Tree,
+    changes_log: sled::Tree,
+    seq_counter: AtomicU64,
 }
 
 impl SledStore {
@@ -25,6 +30,20 @@ impl SledStore {
         let dep_import = db.open_tree("dep:import")?;
         let dep_reverse = db.open_tree("dep:reverse")?;
         let meta_file = db.open_tree("meta:file")?;
+        let word_index = db.open_tree("word:idx")?;
+        let trigram_index = db.open_tree("tri:idx")?;
+        let changes_log = db.open_tree("changes:log")?;
+
+        // Recover the latest sequence number from the changes log
+        let last_seq = changes_log
+            .last()
+            .ok()
+            .flatten()
+            .map(|(key, _)| {
+                let bytes: [u8; 8] = key.as_ref().try_into().unwrap_or([0u8; 8]);
+                u64::from_be_bytes(bytes)
+            })
+            .unwrap_or(0);
 
         Ok(Self {
             _db: db,
@@ -34,6 +53,10 @@ impl SledStore {
             dep_import,
             dep_reverse,
             meta_file,
+            word_index,
+            trigram_index,
+            changes_log,
+            seq_counter: AtomicU64::new(last_seq),
         })
     }
 }
@@ -236,5 +259,171 @@ impl SymbolStore for SledStore {
         let value = bincode::serialize(meta)?;
         self.meta_file.insert(file_path.as_bytes(), value)?;
         Ok(())
+    }
+
+    fn list_all_files(&self) -> anyhow::Result<Vec<(String, FileMetadata)>> {
+        let mut results = Vec::new();
+        for item in self.meta_file.iter() {
+            let (key, value) = item?;
+            let path = String::from_utf8_lossy(&key).to_string();
+            let meta: FileMetadata = bincode::deserialize(&value)?;
+            results.push((path, meta));
+        }
+        Ok(results)
+    }
+
+    fn hot_files(&self, limit: usize) -> anyhow::Result<Vec<(String, FileMetadata)>> {
+        let mut all = self.list_all_files()?;
+        // Sort by mtime descending (most recent first)
+        all.sort_by(|a, b| b.1.mtime.cmp(&a.1.mtime));
+        all.truncate(limit);
+        Ok(all)
+    }
+
+    fn upsert_word_index(&self, file_path: &str, words: &[WordLocation]) -> anyhow::Result<()> {
+        // Remove old entries for this file first
+        self.remove_word_index(file_path)?;
+
+        let mut batch = sled::Batch::default();
+        for wl in words {
+            // Key: word\x00file\x00line (to allow multiple locations per word)
+            let key = format!("{}\x00{}\x00{}", wl.file, wl.line, file_path);
+            // We store under word -> file:line, using a composite key
+            let word_key = format!("{}\x00{}\x00{}", wl.file, file_path, wl.line);
+            // Actually: key = "word\x00file_path\x00line"
+            // Let's use a simpler approach: key = "word\x00file_path:line"
+            let entry_key = format!("{}\x00{}:{}", wl.file, file_path, wl.line);
+            let _ = (key, word_key); // unused bindings
+            batch.insert(entry_key.as_bytes(), &[]);
+        }
+        self.word_index.apply_batch(batch)?;
+        Ok(())
+    }
+
+    fn remove_word_index(&self, file_path: &str) -> anyhow::Result<()> {
+        // Scan all word entries and remove those referencing this file
+        let needle = format!("\x00{}:", file_path);
+        let mut to_remove = Vec::new();
+        for item in self.word_index.iter() {
+            let (key, _) = item?;
+            let key_str = String::from_utf8_lossy(&key);
+            if key_str.contains(&needle) {
+                to_remove.push(key);
+            }
+        }
+        for key in to_remove {
+            self.word_index.remove(key)?;
+        }
+        Ok(())
+    }
+
+    fn lookup_word(&self, word: &str) -> anyhow::Result<Vec<WordLocation>> {
+        let prefix = format!("{}\x00", word);
+        let mut results = Vec::new();
+        for item in self.word_index.scan_prefix(prefix.as_bytes()) {
+            let (key, _) = item?;
+            let key_str = String::from_utf8_lossy(&key);
+            // Key format: "word\x00file_path:line"
+            if let Some(rest) = key_str.strip_prefix(&prefix) {
+                if let Some((file, line_str)) = rest.rsplit_once(':') {
+                    if let Ok(line) = line_str.parse::<u32>() {
+                        results.push(WordLocation {
+                            file: file.to_string(),
+                            line,
+                        });
+                    }
+                }
+            }
+        }
+        Ok(results)
+    }
+
+    fn upsert_trigram_index(&self, file_path: &str, trigrams: &[String]) -> anyhow::Result<()> {
+        self.remove_trigram_index(file_path)?;
+
+        let mut batch = sled::Batch::default();
+        for tri in trigrams {
+            // Key: "trigram\x00file_path"
+            let key = format!("{}\x00{}", tri, file_path);
+            batch.insert(key.as_bytes(), &[]);
+        }
+        self.trigram_index.apply_batch(batch)?;
+        Ok(())
+    }
+
+    fn remove_trigram_index(&self, file_path: &str) -> anyhow::Result<()> {
+        let needle = format!("\x00{}", file_path);
+        let mut to_remove = Vec::new();
+        for item in self.trigram_index.iter() {
+            let (key, _) = item?;
+            let key_str = String::from_utf8_lossy(&key);
+            if key_str.ends_with(&needle) {
+                to_remove.push(key);
+            }
+        }
+        for key in to_remove {
+            self.trigram_index.remove(key)?;
+        }
+        Ok(())
+    }
+
+    fn search_trigrams(&self, trigrams: &[String]) -> anyhow::Result<Vec<String>> {
+        if trigrams.is_empty() {
+            return Ok(Vec::new());
+        }
+
+        // For each trigram, collect the set of files containing it
+        let mut sets: Vec<std::collections::HashSet<String>> = Vec::new();
+        for tri in trigrams {
+            let prefix = format!("{}\x00", tri);
+            let mut file_set = std::collections::HashSet::new();
+            for item in self.trigram_index.scan_prefix(prefix.as_bytes()) {
+                let (key, _) = item?;
+                let key_str = String::from_utf8_lossy(&key);
+                if let Some(file) = key_str.strip_prefix(&prefix) {
+                    file_set.insert(file.to_string());
+                }
+            }
+            sets.push(file_set);
+        }
+
+        // Intersect all sets
+        let mut result = sets[0].clone();
+        for s in &sets[1..] {
+            result = result.intersection(s).cloned().collect();
+        }
+
+        Ok(result.into_iter().collect())
+    }
+
+    fn record_change(&self, file_path: &str, op: ChangeOp) -> anyhow::Result<u64> {
+        let seq = self.seq_counter.fetch_add(1, Ordering::SeqCst) + 1;
+        let entry = ChangeEntry {
+            seq,
+            file_path: file_path.to_string(),
+            operation: op,
+            timestamp: std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap_or_default()
+                .as_secs(),
+        };
+        let value = bincode::serialize(&entry)?;
+        self.changes_log.insert(seq.to_be_bytes(), value)?;
+        Ok(seq)
+    }
+
+    fn changes_since(&self, seq: u64) -> anyhow::Result<Vec<ChangeEntry>> {
+        let start_key = (seq + 1).to_be_bytes();
+        let mut results = Vec::new();
+        for item in self.changes_log.range(start_key..) {
+            let (_, value) = item?;
+            let entry: ChangeEntry = bincode::deserialize(&value)?;
+            results.push(entry);
+        }
+        Ok(results)
+    }
+
+    fn current_seq(&self) -> anyhow::Result<u64> {
+        Ok(self.seq_counter.load(Ordering::SeqCst))
     }
 }
