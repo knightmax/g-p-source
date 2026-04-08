@@ -329,6 +329,7 @@ Get files that changed since a given sequence number. Use for incremental pollin
     {"seq": 43, "file_path": "src/main.rs", "operation": "Upsert", "timestamp": 1712505600}
   ]
 }
+```
 
 ## MCP Mode
 
