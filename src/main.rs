@@ -5,6 +5,7 @@ mod index;
 mod mcp;
 mod parser;
 mod pipeline;
+mod sensitive;
 mod watcher;
 
 use config::Config;
