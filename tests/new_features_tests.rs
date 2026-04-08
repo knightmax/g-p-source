@@ -141,10 +141,7 @@ mod tests {
         let (store, _dir) = make_store();
         // File A has trigrams: "abc", "bcd", "xyz"
         store
-            .upsert_trigram_index(
-                "fileA.rs",
-                &["abc".into(), "bcd".into(), "xyz".into()],
-            )
+            .upsert_trigram_index("fileA.rs", &["abc".into(), "bcd".into(), "xyz".into()])
             .unwrap();
         // File B has trigrams: "abc", "bcd"
         store
@@ -185,19 +182,13 @@ mod tests {
 
         assert_eq!(store.current_seq().unwrap(), 0);
 
-        let seq1 = store
-            .record_change("file1.rs", ChangeOp::Upsert)
-            .unwrap();
+        let seq1 = store.record_change("file1.rs", ChangeOp::Upsert).unwrap();
         assert_eq!(seq1, 1);
 
-        let seq2 = store
-            .record_change("file2.rs", ChangeOp::Upsert)
-            .unwrap();
+        let seq2 = store.record_change("file2.rs", ChangeOp::Upsert).unwrap();
         assert_eq!(seq2, 2);
 
-        let seq3 = store
-            .record_change("file1.rs", ChangeOp::Remove)
-            .unwrap();
+        let seq3 = store.record_change("file1.rs", ChangeOp::Remove).unwrap();
         assert_eq!(seq3, 3);
 
         // Query changes since seq 0 → all 3

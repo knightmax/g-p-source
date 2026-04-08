@@ -389,7 +389,9 @@ fn tool_summary<S: SymbolStore>(store: &Arc<S>) -> Result<String, String> {
     let mut total_symbols = 0u64;
     for (_, meta) in &all_files {
         if !meta.language.is_empty() {
-            *files_by_language.entry(meta.language.clone()).or_insert(0u64) += 1;
+            *files_by_language
+                .entry(meta.language.clone())
+                .or_insert(0u64) += 1;
         }
         total_lines += meta.line_count as u64;
         total_symbols += meta.symbol_count as u64;
@@ -470,12 +472,11 @@ fn tool_read(args: &Value) -> Result<String, String> {
 }
 
 fn tool_hot<S: SymbolStore>(store: &Arc<S>, args: &Value) -> Result<String, String> {
-    let limit = args
-        .get("limit")
-        .and_then(|v| v.as_u64())
-        .unwrap_or(20) as usize;
+    let limit = args.get("limit").and_then(|v| v.as_u64()).unwrap_or(20) as usize;
 
-    let files = store.hot_files(limit).map_err(|e| format!("Error: {}", e))?;
+    let files = store
+        .hot_files(limit)
+        .map_err(|e| format!("Error: {}", e))?;
     let entries: Vec<Value> = files
         .into_iter()
         .map(|(path, meta)| {
@@ -584,10 +585,7 @@ fn tool_word<S: SymbolStore>(store: &Arc<S>, args: &Value) -> Result<String, Str
 }
 
 fn tool_changes<S: SymbolStore>(store: &Arc<S>, args: &Value) -> Result<String, String> {
-    let since = args
-        .get("since")
-        .and_then(|v| v.as_u64())
-        .unwrap_or(0);
+    let since = args.get("since").and_then(|v| v.as_u64()).unwrap_or(0);
 
     let entries = store
         .changes_since(since)

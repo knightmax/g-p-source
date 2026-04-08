@@ -127,7 +127,8 @@ pub trait GpsApi {
     ) -> RpcResult<ReadFileResponse>;
 
     #[method(name = "search")]
-    async fn search(&self, query: String, max_results: Option<u32>) -> RpcResult<Vec<SearchResult>>;
+    async fn search(&self, query: String, max_results: Option<u32>)
+    -> RpcResult<Vec<SearchResult>>;
 
     #[method(name = "word_lookup")]
     async fn word_lookup(&self, word: String) -> RpcResult<Vec<WordHit>>;
@@ -150,7 +151,10 @@ fn rpc_err(msg: String) -> jsonrpsee::types::ErrorObjectOwned {
 #[async_trait]
 impl<S: SymbolStore + 'static> GpsApiServer for GpsApiImpl<S> {
     async fn locate(&self, symbol_name: String) -> RpcResult<Vec<SymbolLocation>> {
-        let records = self.store.locate(&symbol_name).map_err(|e| rpc_err(e.to_string()))?;
+        let records = self
+            .store
+            .locate(&symbol_name)
+            .map_err(|e| rpc_err(e.to_string()))?;
 
         Ok(records
             .into_iter()
@@ -169,7 +173,10 @@ impl<S: SymbolStore + 'static> GpsApiServer for GpsApiImpl<S> {
         file_path: String,
         _depth: Option<u32>,
     ) -> RpcResult<Neighborhood> {
-        let imports = self.store.get_imports(&file_path).map_err(|e| rpc_err(e.to_string()))?;
+        let imports = self
+            .store
+            .get_imports(&file_path)
+            .map_err(|e| rpc_err(e.to_string()))?;
         let imported_by = self
             .store
             .get_importers(&file_path)
@@ -205,12 +212,17 @@ impl<S: SymbolStore + 'static> GpsApiServer for GpsApiImpl<S> {
     }
 
     async fn workspace_summary(&self) -> RpcResult<WorkspaceSummary> {
-        let all_files = self.store.list_all_files().map_err(|e| rpc_err(e.to_string()))?;
+        let all_files = self
+            .store
+            .list_all_files()
+            .map_err(|e| rpc_err(e.to_string()))?;
         let total_files = all_files.len() as u64;
         let mut files_by_language = std::collections::HashMap::new();
         for (_, meta) in &all_files {
             if !meta.language.is_empty() {
-                *files_by_language.entry(meta.language.clone()).or_insert(0u64) += 1;
+                *files_by_language
+                    .entry(meta.language.clone())
+                    .or_insert(0u64) += 1;
             }
         }
 
@@ -237,7 +249,10 @@ impl<S: SymbolStore + 'static> GpsApiServer for GpsApiImpl<S> {
     }
 
     async fn file_tree(&self) -> RpcResult<Vec<FileTreeEntry>> {
-        let all_files = self.store.list_all_files().map_err(|e| rpc_err(e.to_string()))?;
+        let all_files = self
+            .store
+            .list_all_files()
+            .map_err(|e| rpc_err(e.to_string()))?;
         let mut entries: Vec<FileTreeEntry> = all_files
             .into_iter()
             .map(|(path, meta)| FileTreeEntry {
@@ -253,7 +268,10 @@ impl<S: SymbolStore + 'static> GpsApiServer for GpsApiImpl<S> {
 
     async fn hot_files(&self, limit: Option<u32>) -> RpcResult<Vec<HotFileEntry>> {
         let limit = limit.unwrap_or(20) as usize;
-        let files = self.store.hot_files(limit).map_err(|e| rpc_err(e.to_string()))?;
+        let files = self
+            .store
+            .hot_files(limit)
+            .map_err(|e| rpc_err(e.to_string()))?;
         Ok(files
             .into_iter()
             .map(|(path, meta)| HotFileEntry {
@@ -363,7 +381,10 @@ impl<S: SymbolStore + 'static> GpsApiServer for GpsApiImpl<S> {
     }
 
     async fn word_lookup(&self, word: String) -> RpcResult<Vec<WordHit>> {
-        let locations = self.store.lookup_word(&word).map_err(|e| rpc_err(e.to_string()))?;
+        let locations = self
+            .store
+            .lookup_word(&word)
+            .map_err(|e| rpc_err(e.to_string()))?;
         Ok(locations
             .into_iter()
             .map(|wl| WordHit {
@@ -374,7 +395,10 @@ impl<S: SymbolStore + 'static> GpsApiServer for GpsApiImpl<S> {
     }
 
     async fn changes_since(&self, seq: u64) -> RpcResult<Vec<ChangeEntryResponse>> {
-        let entries = self.store.changes_since(seq).map_err(|e| rpc_err(e.to_string()))?;
+        let entries = self
+            .store
+            .changes_since(seq)
+            .map_err(|e| rpc_err(e.to_string()))?;
         Ok(entries
             .into_iter()
             .map(|e| ChangeEntryResponse {

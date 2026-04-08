@@ -19,9 +19,7 @@ const SENSITIVE_PATTERNS: &[&str] = &[
     ".aws/config",
 ];
 
-const SENSITIVE_EXTENSIONS: &[&str] = &[
-    "pem", "key", "p12", "pfx", "jks", "keystore", "ppk",
-];
+const SENSITIVE_EXTENSIONS: &[&str] = &["pem", "key", "p12", "pfx", "jks", "keystore", "ppk"];
 
 const SENSITIVE_PREFIXES: &[&str] = &["id_rsa", "id_ed25519", "id_ecdsa", "id_dsa"];
 
