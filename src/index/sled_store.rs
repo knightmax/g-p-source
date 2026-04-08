@@ -286,14 +286,8 @@ impl SymbolStore for SledStore {
 
         let mut batch = sled::Batch::default();
         for wl in words {
-            // Key: word\x00file\x00line (to allow multiple locations per word)
-            let key = format!("{}\x00{}\x00{}", wl.file, wl.line, file_path);
-            // We store under word -> file:line, using a composite key
-            let word_key = format!("{}\x00{}\x00{}", wl.file, file_path, wl.line);
-            // Actually: key = "word\x00file_path\x00line"
-            // Let's use a simpler approach: key = "word\x00file_path:line"
+            // Key: "word\x00file_path:line" — allows prefix scan by word
             let entry_key = format!("{}\x00{}:{}", wl.file, file_path, wl.line);
-            let _ = (key, word_key); // unused bindings
             batch.insert(entry_key.as_bytes(), &[]);
         }
         self.word_index.apply_batch(batch)?;

@@ -32,8 +32,9 @@ pub fn is_sensitive_file(path: &std::path::Path) -> bool {
         None => return false,
     };
 
-    // Check exact file name matches
     let lower_name = file_name.to_lowercase();
+
+    // Check exact file name matches
     for pattern in SENSITIVE_PATTERNS {
         if lower_name == *pattern {
             return true;
@@ -45,9 +46,9 @@ pub fn is_sensitive_file(path: &std::path::Path) -> bool {
         return true;
     }
 
-    // Check sensitive extensions
-    if let Some(ext) = path.extension().and_then(|e| e.to_str()) {
-        let lower_ext = ext.to_lowercase();
+    // Check sensitive extensions (use the already-lowercased name)
+    if let Some(pos) = lower_name.rfind('.') {
+        let lower_ext = &lower_name[pos + 1..];
         for sensitive_ext in SENSITIVE_EXTENSIONS {
             if lower_ext == *sensitive_ext {
                 return true;

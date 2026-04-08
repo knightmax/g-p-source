@@ -3,6 +3,9 @@ use jsonrpsee::core::RpcResult;
 use jsonrpsee::core::async_trait;
 use jsonrpsee::proc_macros::rpc;
 use serde::{Deserialize, Serialize};
+
+/// Maximum number of matching lines to return per file in search results.
+const MAX_MATCHES_PER_FILE: usize = 5;
 use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
 
@@ -342,7 +345,7 @@ impl<S: SymbolStore + 'static> GpsApiServer for GpsApiImpl<S> {
                             line: (i + 1) as u32,
                             content: line.to_string(),
                         });
-                        if matches.len() >= 5 {
+                        if matches.len() >= MAX_MATCHES_PER_FILE {
                             break; // Limit matches per file
                         }
                     }

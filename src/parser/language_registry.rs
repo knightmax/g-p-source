@@ -10,6 +10,20 @@ pub enum SupportedLanguage {
     CSharp,
 }
 
+impl SupportedLanguage {
+    /// Returns a canonical lowercase language name for storage and display.
+    pub fn canonical_name(self) -> &'static str {
+        match self {
+            SupportedLanguage::Java => "java",
+            SupportedLanguage::TypeScript => "typescript",
+            SupportedLanguage::Tsx => "tsx",
+            SupportedLanguage::Python => "python",
+            SupportedLanguage::Rust => "rust",
+            SupportedLanguage::CSharp => "csharp",
+        }
+    }
+}
+
 pub struct LanguageRegistry {
     ext_map: HashMap<String, SupportedLanguage>,
     languages: HashMap<SupportedLanguage, tree_sitter::Language>,

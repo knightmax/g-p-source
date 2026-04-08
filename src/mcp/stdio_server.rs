@@ -4,6 +4,9 @@ use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
 use tokio::io::{AsyncBufReadExt, AsyncWriteExt, BufReader};
 
+/// Maximum number of matching lines to return per file in search results.
+const MAX_MATCHES_PER_FILE: usize = 5;
+
 /// Minimal MCP (Model Context Protocol) server over stdio.
 /// Implements just enough of the protocol: initialize, tools/list, tools/call.
 pub async fn run_mcp_server<S: SymbolStore + 'static>(
@@ -536,7 +539,7 @@ fn tool_search<S: SymbolStore>(store: &Arc<S>, args: &Value) -> Result<String, S
                         "line": i + 1,
                         "content": line
                     }));
-                    if matches.len() >= 5 {
+                    if matches.len() >= MAX_MATCHES_PER_FILE {
                         break;
                     }
                 }

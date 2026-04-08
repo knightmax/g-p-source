@@ -162,7 +162,7 @@ pub async fn run_pipeline(
                     let trigrams = extract_trigrams(&source_str);
 
                     // Detect language name and line count
-                    let language = format!("{:?}", lang).to_lowercase();
+                    let language = lang.canonical_name().to_string();
                     let line_count = bytecount_lines(&source);
 
                     tracing::debug!(
@@ -254,7 +254,16 @@ fn extract_trigrams(source: &str) -> Vec<String> {
     trigrams.into_iter().collect()
 }
 
-/// Count newlines in source content.
+/// Count lines in source content.
 fn bytecount_lines(source: &[u8]) -> u32 {
-    source.iter().filter(|&&b| b == b'\n').count() as u32 + 1
+    if source.is_empty() {
+        return 0;
+    }
+    let newlines = source.iter().filter(|&&b| b == b'\n').count() as u32;
+    // If the file doesn't end with a newline, there's one more line
+    if source.last() == Some(&b'\n') {
+        newlines
+    } else {
+        newlines + 1
+    }
 }
