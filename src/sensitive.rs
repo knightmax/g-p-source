@@ -1,6 +1,5 @@
 /// Patterns for sensitive files that should never be indexed or served via read_file.
 /// Inspired by codedb's security model.
-
 const SENSITIVE_PATTERNS: &[&str] = &[
     ".env",
     ".env.local",

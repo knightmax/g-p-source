@@ -318,15 +318,14 @@ impl SymbolStore for SledStore {
             let (key, _) = item?;
             let key_str = String::from_utf8_lossy(&key);
             // Key format: "word\x00file_path:line"
-            if let Some(rest) = key_str.strip_prefix(&prefix) {
-                if let Some((file, line_str)) = rest.rsplit_once(':') {
-                    if let Ok(line) = line_str.parse::<u32>() {
-                        results.push(WordLocation {
-                            file: file.to_string(),
-                            line,
-                        });
-                    }
-                }
+            if let Some(rest) = key_str.strip_prefix(&prefix)
+                && let Some((file, line_str)) = rest.rsplit_once(':')
+                && let Ok(line) = line_str.parse::<u32>()
+            {
+                results.push(WordLocation {
+                    file: file.to_string(),
+                    line,
+                });
             }
         }
         Ok(results)
